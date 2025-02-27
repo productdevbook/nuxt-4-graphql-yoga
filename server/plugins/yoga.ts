@@ -7,7 +7,7 @@ const routePath = '/api/graphql'
 const healthCheckPath = '/api/graphql/health'
 
 const createYogaServer = createYoga<{
-  event?: H3Event<{}>
+  event?: H3Event<object>
 }>({
   graphqlEndpoint: routePath,
   healthCheckEndpoint: healthCheckPath,
@@ -45,11 +45,18 @@ const graphQlHandler = defineEventHandler(async (event) => {
   return sendWebResponse(event, data)
 })
 
+// Define type for GraphQL ping response
+interface PingQueryResponse {
+  data: {
+    ping: string | object
+  }
+}
+
 const healthCheckHandler = defineEventHandler(async () => {
-  const data = await $fetch(routePath, {
+  const data = await $fetch<PingQueryResponse>(routePath, {
     body: '{"query":"query Query {\\n  ping\\n}","variables":{},"operationName":"Query"}',
     method: 'POST',
-  }) as any
+  })
   return data?.data.ping || {}
 })
 
