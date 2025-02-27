@@ -1,19 +1,20 @@
-import { createSchema, createYoga } from "graphql-yoga"
-import { defineEventHandler, H3Event, sendWebResponse, toWebRequest } from "h3"
-import { schema } from "../services"
-// GraphQL endpoints
+import { createYoga } from 'graphql-yoga'
+import type { H3Event } from 'h3'
+import { defineEventHandler, sendWebResponse, toWebRequest } from 'h3'
+import { schema } from '../services'
+
 const routePath = '/api/graphql'
 const healthCheckPath = '/api/graphql/health'
-  
+
 const createYogaServer = createYoga<{
-    event?: H3Event<{}>
+  event?: H3Event<{}>
 }>({
-    graphqlEndpoint: routePath,
-    healthCheckEndpoint: healthCheckPath,
-    graphiql: true,
-    schema: schema,
-    renderGraphiQL: () => {
-      return `
+  graphqlEndpoint: routePath,
+  healthCheckEndpoint: healthCheckPath,
+  graphiql: true,
+  schema: schema,
+  renderGraphiQL: () => {
+    return `
     <!DOCTYPE html>
     <html lang="en">
       <body style="margin: 0; overflow-x: hidden; overflow-y: hidden">
@@ -34,29 +35,26 @@ const createYogaServer = createYoga<{
       </script>
       </body>
     </html>`
-    },
-    landingPage: false,
-  })
-
-    // GraphQL h3 handler
-const graphQlHandler = defineEventHandler(async (event) => {
-const data = await createYogaServer.handle({ request: toWebRequest(event) }, { event })
-return sendWebResponse(event, data)
+  },
+  landingPage: false,
 })
-    
 
-  const healthCheckHandler = defineEventHandler(async () => {
-    const data = await $fetch(routePath, {
-      body: '{"query":"query Query {\\n  ping\\n}","variables":{},"operationName":"Query"}',
-      method: 'POST',
-    }) as any
-    return data?.data.ping || {}
-  })
+// GraphQL h3 handler
+const graphQlHandler = defineEventHandler(async (event) => {
+  const data = await createYogaServer.handle({ request: toWebRequest(event) }, { event })
+  return sendWebResponse(event, data)
+})
 
-
+const healthCheckHandler = defineEventHandler(async () => {
+  const data = await $fetch(routePath, {
+    body: '{"query":"query Query {\\n  ping\\n}","variables":{},"operationName":"Query"}',
+    method: 'POST',
+  }) as any
+  return data?.data.ping || {}
+})
 
 export default defineNitroPlugin((nitroApp) => {
-    // GraphQL endpoint'ini kaydet
+  // GraphQL endpoint'ini kaydet
   nitroApp.router.use(routePath, graphQlHandler)
   nitroApp.router.use(healthCheckPath, healthCheckHandler)
 })
