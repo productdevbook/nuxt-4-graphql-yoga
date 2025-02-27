@@ -1,6 +1,6 @@
 /**
  * GraphQL Yoga Server Integration for Nuxt
- * 
+ *
  * This plugin integrates GraphQL Yoga with Nuxt's Nitro server, providing
  * a full-featured GraphQL API with Apollo Sandbox interface.
  */
@@ -87,7 +87,7 @@ const healthCheckHandler = defineEventHandler(async () => {
 export default defineNitroPlugin((nitroApp) => {
   // Register the main GraphQL endpoint
   nitroApp.router.use(routePath, graphQlHandler)
-  
+
   // Register the health check endpoint
   nitroApp.router.use(healthCheckPath, healthCheckHandler)
 })
