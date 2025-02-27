@@ -1,11 +1,21 @@
+/**
+ * GraphQL Yoga Server Integration for Nuxt
+ * 
+ * This plugin integrates GraphQL Yoga with Nuxt's Nitro server, providing
+ * a full-featured GraphQL API with Apollo Sandbox interface.
+ */
 import { createYoga } from 'graphql-yoga'
 import type { H3Event } from 'h3'
 import { defineEventHandler, sendWebResponse, toWebRequest } from 'h3'
 import { schema } from '../services'
 
+// API endpoint configuration
 const routePath = '/api/graphql'
 const healthCheckPath = '/api/graphql/health'
 
+/**
+ * Creates the GraphQL Yoga server instance with Apollo Sandbox UI
+ */
 const createYogaServer = createYoga<{
   event?: H3Event<object>
 }>({
@@ -13,6 +23,7 @@ const createYogaServer = createYoga<{
   healthCheckEndpoint: healthCheckPath,
   graphiql: true,
   schema: schema,
+  // Custom Apollo Sandbox UI implementation
   renderGraphiQL: () => {
     return `
     <!DOCTYPE html>
@@ -39,19 +50,29 @@ const createYogaServer = createYoga<{
   landingPage: false,
 })
 
-// GraphQL h3 handler
+/**
+ * H3 event handler for GraphQL requests
+ * Processes incoming GraphQL queries and returns responses
+ */
 const graphQlHandler = defineEventHandler(async (event) => {
   const data = await createYogaServer.handle({ request: toWebRequest(event) }, { event })
   return sendWebResponse(event, data)
 })
 
-// Define type for GraphQL ping response
+/**
+ * Type definition for GraphQL ping response
+ * Ensures type safety when working with the health check endpoint
+ */
 interface PingQueryResponse {
   data: {
     ping: string | object
   }
 }
 
+/**
+ * Health check handler to verify GraphQL service functionality
+ * Makes a simple ping query to test if the GraphQL service is running correctly
+ */
 const healthCheckHandler = defineEventHandler(async () => {
   const data = await $fetch<PingQueryResponse>(routePath, {
     body: '{"query":"query Query {\\n  ping\\n}","variables":{},"operationName":"Query"}',
@@ -60,8 +81,13 @@ const healthCheckHandler = defineEventHandler(async () => {
   return data?.data.ping || {}
 })
 
+/**
+ * Nitro plugin that registers the GraphQL and health check endpoints
+ */
 export default defineNitroPlugin((nitroApp) => {
-  // GraphQL endpoint'ini kaydet
+  // Register the main GraphQL endpoint
   nitroApp.router.use(routePath, graphQlHandler)
+  
+  // Register the health check endpoint
   nitroApp.router.use(healthCheckPath, healthCheckHandler)
 })
